@@ -36,7 +36,7 @@ async def fetch_datamuse(topic: str) -> list:
         data = await fetch_with_retries(session, url)
         return [item["word"] for item in data][:10]
 
-
+# here for quotable io  SSL error was occuring i bypassed it but decided not to put it into production so uisng zenquotes for quotes
 # async def fetch_quotable(topic: str) -> list:
 #     url = f"https://api.quotable.io/search/quotes?query={topic}"
 

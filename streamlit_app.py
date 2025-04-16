@@ -1,3 +1,4 @@
+
 import streamlit as st
 import asyncio
 import textstat
@@ -9,72 +10,94 @@ from agents.writing_agent import generate_markdown_blog
 from agents.seo_agent import generate_metadata, estimate_reading_time
 
 
-def generate_blog(topic: str, tone: str,progress=None):
-    if progress: progress.progress(10, "🔍 Generating subtopics...")
+def generate_blog(topic: str, tone: str, progress=None):
+    if progress:
+        progress.progress(10, f"🔍 Generating subtopics for: {topic}")
     topic_data = generate_subtopics(topic, tone)
     subtopics = topic_data["subtopics"]
     slug = topic_data["slug"]
 
-    if progress: progress.progress(40, "📚 Running research...")
+    if progress:
+        progress.progress(40, f"📚 Running research for: {topic}")
     research_data = asyncio.run(run_research(topic))
-    if progress: progress.progress(70, "✍️ Writing your blog...")
+
+    if progress:
+        progress.progress(70, f"✍️ Writing blog for: {topic}")
     blog_md = generate_markdown_blog(topic, subtopics, research_data, tone)
-    if progress: progress.progress(90, "🧠 Generating metadata...")
+
+    if progress:
+        progress.progress(90, f"🧠 Generating metadata for: {topic}")
     metadata = generate_metadata(topic, research_data.get("keywords", []))
     metadata["reading_time"] = estimate_reading_time(blog_md)
     metadata["readability_score"] = textstat.flesch_reading_ease(blog_md)
-    if progress: progress.progress(100, "✅ Done!")
+
+    if progress:
+        progress.progress(100, f"✅ Done: {topic}")
+
     return blog_md, metadata, slug
 
 
-
+# Streamlit UI
 st.set_page_config(page_title="📝 AI Blog Agent", layout="wide")
 st.title("🧠 Autonomous Blog Writing Agent")
-
 st.markdown("Craft long-form blogs like a pro content writer — with AI & public data magic! 🔍🧠")
 
-
+# Input Form
 with st.form("blog_form"):
-    topic = st.text_input("💡 What’s your blog topic?", value="AI in Healthcare")
+    st.markdown("Enter one or more blog topics below (one per line):")
+    topics_input = st.text_area("💡 Blog Topics", value="AI in Healthcare\nAI in Education")
     tone = st.selectbox("🎨 Choose a writing tone", ["educational", "formal", "creative", "casual", "inspirational"])
-    submitted = st.form_submit_button("🚀 Write My Blog!")
+    submitted = st.form_submit_button("🚀 Write My Blogs!")
+
+#Blog
+if submitted and topics_input.strip():
+    topics = [t.strip() for t in topics_input.strip().splitlines() if t.strip()]
+    progress_bar = st.progress(0)
+
+    st.session_state.results = []
+
+    for i, topic in enumerate(topics):
+        pct = int((i / len(topics)) * 100)
+        progress_bar.progress(pct, f"Processing: {topic}")
+        blog_md, metadata, slug = generate_blog(topic, tone, progress=progress_bar)
+        st.session_state.results.append({
+            "topic": topic,
+            "slug": slug,
+            "markdown": blog_md,
+            "metadata": metadata
+        })
+
+    progress_bar.empty()
+    st.success("✅ All blogs are ready!")
 
 
-if submitted and topic:
-    with st.spinner("⌛️ Thinking, researching, and writing..."):
-        progress_bar = st.progress(0)
-        blog_md, metadata, slug = generate_blog(topic, tone,progress=progress_bar)
-        progress_bar.empty()
-        # Store in session state to persist
-        st.session_state.blog_md = blog_md
-        st.session_state.metadata = metadata
-        st.session_state.slug = slug
+#Results
+if "results" in st.session_state:
+    for idx, result in enumerate(st.session_state.results, start=1):
+        st.markdown(f"## 📝 Blog {idx}: {result['topic']}")
 
+        with st.expander("📄 View Blog Content", expanded=False):
+            st.markdown(result["markdown"])
 
-if "blog_md" in st.session_state and "metadata" in st.session_state:
-    
-    st.success("✅ Your blog is ready!")
+        with st.expander("📊 Metadata Snapshot", expanded=False):
+            st.json(result["metadata"])
 
-    st.markdown("### 📄 Blog Content Preview")
-    st.markdown(st.session_state.blog_md)
+        st.download_button(
+            label="📥 Download Blog (.md)",
+            data=result["markdown"],
+            file_name=f"{result['slug']}.md",
+            mime="text/markdown",
+            key=f"md_{idx}"
+        )
 
-    st.markdown("### 📊 Blog Metadata Snapshot")
-    st.json(st.session_state.metadata)
+        st.download_button(
+            label="🧾 Download Metadata (.json)",
+            data=json.dumps(result["metadata"], indent=2),
+            file_name=f"{result['slug']}.json",
+            mime="application/json",
+            key=f"json_{idx}"
+        )
 
-    st.markdown("### 📥 Save Your Work")
+        st.markdown("---")
 
-    st.download_button(
-        label="📥 Download Blog (.md)",
-        data=st.session_state.blog_md,
-        file_name=f"{st.session_state.slug}.md",
-        mime="text/markdown"
-    )
-
-    st.download_button(
-        label="🧾 Download Metadata (.json)",
-        data=json.dumps(st.session_state.metadata, indent=2),
-        file_name=f"{st.session_state.slug}.json",
-        mime="application/json"
-    )
-
-    st.info("Need another blog? Just enter a new topic above ☝️")
+    st.info("Want more blogs? Enter new topics above ☝️")
