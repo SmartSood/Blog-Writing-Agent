@@ -4,7 +4,10 @@ A Python-based AI-powered content generation tool that mimics a junior blog writ
 It uses public APIs and LLMs to autonomously plan, research, write, and export long-form Markdown blogs with SEO metadata.
 
 ---
-
+# Live Demo
+```link
+https://ai-blog-wri.streamlit.app/
+```
 ## 🚀 Features
 
 - 🧠 Understands the topic and tone
@@ -47,6 +50,15 @@ NEWSDATA_API_KEY=your_newsdata_api_key
 GEMINI_API_KEY=your_gemini_api_key
 ```
 ## 🧪 How to Use
+
+
+##  Front End Deployment
+```bash
+streamlit run streamlit_app.py
+```
+
+## Backend only
+
 ### Single topic:
 ```bash
 python main.py --topic "AI in Healthcare"
@@ -94,6 +106,6 @@ Metadata JSON:
 }
 ```
 
-### 👨‍💻 Author
+### 👨‍💻 @Smarth
 This project was built as part of a Python internship project at Flowgic.
 
