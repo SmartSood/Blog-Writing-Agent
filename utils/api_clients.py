@@ -3,7 +3,7 @@ import aiohttp
 import os
 import asyncio
 from dotenv import load_dotenv
-
+import ssl
 load_dotenv()
 
 NEWS_API_KEY = os.getenv("NEWSDATA_API_KEY")
@@ -37,8 +37,35 @@ async def fetch_datamuse(topic: str) -> list:
         return [item["word"] for item in data][:10]
 
 
-async def fetch_quotable(topic: str) -> list:
-    url = f"https://api.quotable.io/search/quotes?query={topic}"
+# async def fetch_quotable(topic: str) -> list:
+#     url = f"https://api.quotable.io/search/quotes?query={topic}"
+
+#     ssl_context = ssl.create_default_context()
+#     ssl_context.check_hostname = False
+#     ssl_context.verify_mode = ssl.CERT_NONE  
+
+#     async with aiohttp.ClientSession() as session:
+#         async with session.get(url, ssl=ssl_context) as response:
+#             data = await response.json()
+#             return [quote["content"] for quote in data.get("results", [])][:3]
+
+
+async def fetch_quotable(topic: str, n: int = 3) -> list:
+    url = "https://zenquotes.io/api/quotes"
+
     async with aiohttp.ClientSession() as session:
-        data = await fetch_with_retries(session, url)
-        return [quote["content"] for quote in data.get("results", [])][:3]
+        async with session.get(url) as response:
+            all_quotes = await response.json()
+
+            # Filter quotes by topic keyword (case-insensitive)
+            filtered = [
+                f"{q['q']} — {q['a']}" 
+                for q in all_quotes 
+                if topic.lower() in q['q'].lower()
+            ]
+
+            # Fallback: if no match found, return first few quotes anyway
+            if not filtered:
+                filtered = [f"{q['q']} — {q['a']}" for q in all_quotes[:n]]
+
+            return filtered[:n]
