@@ -106,6 +106,6 @@ Metadata JSON:
 }
 ```
 
-### 👨‍💻 @Smarth
+### 👨‍💻 @SmartSood
 This project was built as part of a Python internship project at Flowgic.
 
