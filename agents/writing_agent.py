@@ -1,4 +1,3 @@
-# agents/writing_agent.py
 
 import os
 import google.generativeai as genai
