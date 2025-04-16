@@ -6,7 +6,6 @@ import logging
 import textstat
 from tqdm import tqdm
 from datetime import datetime
-
 from agents.topic_agent import generate_subtopics
 from agents.research_agent import run_research
 from agents.writing_agent import generate_markdown_blog
